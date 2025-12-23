@@ -351,6 +351,7 @@ def render_task_card(
     todo: Todo,
     todo_ctrl: TodoController,
     category_ctrl: CategoryController,
+    show_edit: bool = True,
 ):
     """Rendere Single Task Card"""
     status_icon = "☑️" if todo.status == TodoStatus.COMPLETED else "☐"
@@ -410,14 +411,23 @@ def render_task_card(
                 st.write(todo.description)
 
         with col3:
-            btn_col1, btn_col2 = st.columns(2)
+            if show_edit:
+                btn_col1, btn_col2 = st.columns(2)
 
-            with btn_col1:
-                if st.button("✏️", key=f"edit_{todo.id}", use_container_width=True):
-                    st.session_state.edit_todo_id = todo.id
-                    st.rerun()
+                with btn_col1:
+                    if st.button("✏️", key=f"edit_{todo.id}", use_container_width=True):
+                        st.session_state.edit_todo_id = todo.id
+                        st.rerun()
 
-            with btn_col2:
+                with btn_col2:
+                    if st.button("🗑️", key=f"delete_{todo.id}", use_container_width=True):
+                        if st.session_state.get("confirm_delete_todo") == todo.id:
+                            todo_ctrl.delete_todo(todo.id)
+                            st.session_state.last_action = "Aufgabe gelöscht"
+                            st.rerun()
+                        else:
+                            st.session_state.confirm_delete_todo = todo.id
+            else:
                 if st.button("🗑️", key=f"delete_{todo.id}", use_container_width=True):
                     if st.session_state.get("confirm_delete_todo") == todo.id:
                         todo_ctrl.delete_todo(todo.id)
@@ -558,17 +568,31 @@ def show_todo_list_page(todo_ctrl: TodoController, category_ctrl: CategoryContro
     if filters["search"]:
         todos = [t for t in todos if filters["search"].lower() in t.title.lower()]
 
-    todos.sort(key=lambda t: (t.is_overdue() == False, t.due_date or date.max))
+    # Trenne offene und erledigte Aufgaben
+    open_todos = [t for t in todos if t.status != TodoStatus.COMPLETED]
+    completed_todos = [t for t in todos if t.status == TodoStatus.COMPLETED]
 
-    if todos:
-        for todo in todos:
+    open_todos.sort(key=lambda t: (t.is_overdue() == False, t.due_date or date.max))
+    completed_todos.sort(key=lambda t: t.due_date or date.max, reverse=True)
+
+    # Zeige offene Aufgaben
+    if open_todos:
+        for todo in open_todos:
             if st.session_state.get("edit_todo_id") == todo.id:
                 render_edit_todo_modal(todo, todo_ctrl, category_ctrl)
                 st.divider()
             else:
-                render_task_card(todo, todo_ctrl, category_ctrl)
+                render_task_card(todo, todo_ctrl, category_ctrl, show_edit=True)
     else:
-        st.info("Keine Aufgaben gefunden. Erstelle eine neue!")
+        if not completed_todos:
+            st.info("Keine Aufgaben gefunden. Erstelle eine neue!")
+
+    # Zeige erledigte Aufgaben
+    if completed_todos:
+        st.divider()
+        st.markdown("## Erledigte Aufgaben")
+        for todo in completed_todos:
+            render_task_card(todo, todo_ctrl, category_ctrl, show_edit=False)
 
     render_help_box()
 

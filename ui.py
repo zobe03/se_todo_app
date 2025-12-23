@@ -452,6 +452,7 @@ def render_new_task_form(todo_ctrl: TodoController, category_ctrl: CategoryContr
 
                     set_flash_message(f"Aufgabe erstellt: '{title}'")
                     st.success(f"☑️ Aufgabe erstellt: {title}")
+                    st.session_state.show_new_task_form = False
                     st.rerun()
                     return new_todo
 

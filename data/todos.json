@@ -14,5 +14,19 @@
     "created_at": "2025-12-23T15:25:17.789431",
     "updated_at": "2025-12-23T15:25:17.789437",
     "completed_at": null
+  },
+  {
+    "id": "2e073c37-9358-4d2c-b14b-8dc73418c11c",
+    "title": "Bkibb",
+    "description": "",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-23T15:28:15.278468",
+    "updated_at": "2025-12-23T15:28:15.278475",
+    "completed_at": null
   }
 ]

@@ -5,6 +5,35 @@ from datetime import date
 from models import Todo, TodoStatus, RecurrenceType, Category, JSONStorage
 
 
+# ===== HILFSFUNKTIONEN =====
+
+def capitalize_first_letter(text: str) -> str:
+    """Erster Buchstabe groß"""
+    if not text:
+        return text
+    return text[0].upper() + text[1:] if len(text) > 1 else text.upper()
+
+
+def capitalize_sentences(text: str) -> str:
+    """Erster Buchstabe nach Satzanfang oder nach '. ' groß"""
+    if not text:
+        return text
+    
+    # Erster Buchstabe groß
+    result = text[0].upper() + text[1:] if len(text) > 1 else text.upper()
+    
+    # Nach ". " auch groß
+    parts = result.split(". ")
+    capitalized_parts = [parts[0]]
+    for part in parts[1:]:
+        if part:
+            capitalized_parts.append(part[0].upper() + part[1:] if len(part) > 1 else part.upper())
+        else:
+            capitalized_parts.append(part)
+    
+    return ". ".join(capitalized_parts)
+
+
 # ===== TODO CONTROLLER =====
 
 class TodoController:
@@ -44,6 +73,10 @@ class TodoController:
         if len(categories) > 5:
             raise ValueError("Max. 5 Kategorien pro Aufgabe erlaubt")
 
+        # Kapitalisierung
+        title = capitalize_first_letter(title.strip())
+        description = capitalize_sentences(description.strip()) if description else ""
+
         todo = Todo(
             title=title,
             description=description,
@@ -78,6 +111,10 @@ class TodoController:
         if "title" in kwargs and kwargs["title"]:
             if not kwargs["title"].strip():
                 raise ValueError("Titel darf nicht leer sein")
+            kwargs["title"] = capitalize_first_letter(kwargs["title"].strip())
+
+        if "description" in kwargs:
+            kwargs["description"] = capitalize_sentences(kwargs["description"].strip()) if kwargs["description"] else ""
 
         if "categories" in kwargs:
             if len(kwargs["categories"]) > 5:
@@ -257,7 +294,7 @@ class CategoryController:
 
     # ===== CRUD Operationen =====
 
-    def create_category(self, name: str, color: str = "#0078D4") -> Category:
+    def create_category(self, name: str, color: str = None) -> Category:
         """Erstelle neue Kategorie"""
         if len(self._categories) >= self.MAX_CATEGORIES:
             raise ValueError(
@@ -267,6 +304,14 @@ class CategoryController:
 
         if self.category_exists(name):
             raise ValueError(f"Kategorie '{name}' existiert bereits")
+
+        # Kapitalisierung
+        name = capitalize_first_letter(name.strip())
+
+        # Automatische Farbzuweisung aus Palette
+        if color is None:
+            color_palette = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A", "#98D8C8", "#F7DC6F", "#BB8FCE", "#85C1E2", "#F8B195", "#C06C84"]
+            color = color_palette[len(self._categories) % len(color_palette)]
 
         category = Category(name=name, color=color)
         self._categories.append(category)
@@ -305,9 +350,10 @@ class CategoryController:
         if name is not None:
             if not name.strip():
                 raise ValueError("Name darf nicht leer sein")
-            if name != category.name and self.category_exists(name):
-                raise ValueError(f"Kategorie '{name}' existiert bereits")
-            category.name = name.strip()
+            name_capitalized = capitalize_first_letter(name.strip())
+            if name_capitalized != category.name and self.category_exists(name_capitalized):
+                raise ValueError(f"Kategorie '{name_capitalized}' existiert bereits")
+            category.name = name_capitalized
 
         if color is not None:
             if not Category._is_valid_hex_color(color):

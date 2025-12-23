@@ -1,7 +1,7 @@
 """App Main Entry Point - Streamlit Todo App"""
 
 import streamlit as st
-from ui import apply_page_config, show_todo_list_page, show_categories_page
+from ui import apply_page_config, show_todo_list_page
 from controllers import TodoController, CategoryController
 
 
@@ -33,19 +33,11 @@ if "show_new_task_form" not in st.session_state:
 if "last_action" not in st.session_state:
     st.session_state.last_action = None
 
-# ===== Navigation =====
-st.sidebar.markdown("# Navigation")
-page = st.sidebar.radio(
-    label="Navigation",
-    options=["📝 Aufgaben verwalten", "🏷️ Kategorien verwalten"],
-    label_visibility="collapsed",
-)
+if "edit_category_id" not in st.session_state:
+    st.session_state.edit_category_id = None
 
-# ===== Page Router =====
-if page == "📝 Aufgaben verwalten":
-    show_todo_list_page(st.session_state.todo_controller, st.session_state.category_controller)
-elif page == "🏷️ Kategorien verwalten":
-    show_categories_page(st.session_state.category_controller)
+# ===== Main Page =====
+show_todo_list_page(st.session_state.todo_controller, st.session_state.category_controller)
 
 # ===== Footer =====
 st.markdown("---")

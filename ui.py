@@ -189,11 +189,87 @@ def render_filter_sidebar(todo_ctrl: TodoController, category_ctrl: CategoryCont
     if category_filter != "Alle":
         filters["category"] = category_filter
 
+    # ===== KATEGORIENVERWALTUNG =====
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 🏷️ Kategorien")
+    
+    with st.sidebar:
+        # Kategorien anzeigen
+        categories = category_ctrl.get_categories()
+        if categories:
+            for category in categories:
+                with st.container(border=True):
+                    col1, col2, col3 = st.columns([3, 1, 1])
+                    with col1:
+                        st.markdown(f'<p style="color: white; margin: 0; padding: 4px 0; text-align: left; font-size: 16px; font-weight: bold;">{category.name}</p>', unsafe_allow_html=True)
+                    with col2:
+                        if st.button("✏️", key=f"edit_cat_sidebar_{category.id}", use_container_width=True):
+                            st.session_state.edit_category_id = category.id
+                            st.rerun()
+                    with col3:
+                        if st.button("🗑️", key=f"delete_cat_sidebar_{category.id}", use_container_width=True):
+                            if st.session_state.get("confirm_delete_category") == category.id:
+                                category_ctrl.delete_category(category.id)
+                                set_flash_message("Kategorie gelöscht")
+                                st.rerun()
+                            else:
+                                st.session_state.confirm_delete_category = category.id
+        
+        # Edit Modal in Sidebar
+        if st.session_state.get("edit_category_id"):
+            cat = category_ctrl.get_category(st.session_state.edit_category_id)
+            if cat:
+                st.markdown("**Kategorie bearbeiten:**")
+                with st.form(key=f"edit_cat_sidebar_form_{cat.id}"):
+                    new_name = st.text_input(
+                        label="Name",
+                        value=cat.name,
+                        max_chars=50,
+                    )
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.form_submit_button("💾", use_container_width=True):
+                            category_ctrl.update_category(cat.id, name=new_name, color=cat.color)
+                            st.session_state.edit_category_id = None
+                            set_flash_message("Kategorie aktualisiert")
+                            st.rerun()
+                    with col2:
+                        if st.form_submit_button("❌", use_container_width=True):
+                            st.session_state.edit_category_id = None
+                            st.rerun()
+        
+        # Neue Kategorie
+        if st.button("➕ Neue Kategorie", use_container_width=True, key="btn_new_category_sidebar"):
+            st.session_state.show_new_category_form = not st.session_state.get("show_new_category_form", False)
+            st.rerun()
+        
+        if st.session_state.get("show_new_category_form"):
+            with st.form(key="new_category_sidebar_form"):
+                cat_name = st.text_input(
+                    label="Kategorie-Name",
+                    placeholder="z.B. Arbeit",
+                    max_chars=50,
+                )
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.form_submit_button("☑️", use_container_width=True):
+                        try:
+                            category_ctrl.create_category(cat_name)
+                            st.session_state.show_new_category_form = False
+                            set_flash_message("Kategorie erstellt")
+                            st.rerun()
+                        except ValueError as e:
+                            st.error(f"❌ {str(e)}")
+                with col2:
+                    if st.form_submit_button("❌", use_container_width=True):
+                        st.session_state.show_new_category_form = False
+                        st.rerun()
+
     return filters
 
 def render_help_box():
     """Rendere Hilfe-Box"""
-    st.sidebar.markdown("### Hilfe")
+    st.sidebar.markdown("### ❓ Hilfe")
 
     with st.sidebar:
         with st.expander("📖 Quick Start"):
@@ -618,94 +694,4 @@ def show_todo_list_page(todo_ctrl: TodoController, category_ctrl: CategoryContro
     render_help_box()
 
 
-def show_categories_page(category_ctrl: CategoryController):
-    """Seite: Kategorien verwalten"""
-    st.markdown("# 🏷️ Kategorien verwalten")
 
-    categories = category_ctrl.get_categories()
-
-    st.markdown("## Alle Kategorien")
-
-    if categories:
-        for category in categories:
-            with st.container(border=True):
-                col1, col2, col3 = st.columns([5, 0.5, 0.5], vertical_alignment="center")
-
-                with col1:
-                    st.markdown(
-                        f'<div style="background-color: {hex_to_rgba(category.color, 0.5)}; color: white; padding: 12px 15px; border-radius: 6px; text-align: center; font-weight: bold;">{category.name}</div>',
-                        unsafe_allow_html=True
-                    )
-
-                with col2:
-                    if st.button("✏️", key=f"edit_cat_{category.id}", use_container_width=True):
-                        st.session_state.edit_category_id = category.id
-                        st.rerun()
-
-                with col3:
-                    if st.button("🗑️", key=f"delete_cat_admin_{category.id}", use_container_width=True):
-                        if st.session_state.get("confirm_delete_category") == category.id:
-                            category_ctrl.delete_category(category.id)
-                            st.success("Kategorie gelöscht!")
-                            st.rerun()
-                        else:
-                            st.session_state.confirm_delete_category = category.id
-                            st.warning("Klick nochmal zum Bestätigen")
-
-                # Edit Modal
-                if st.session_state.get("edit_category_id") == category.id:
-                    st.divider()
-                    st.markdown("### Kategorie bearbeiten")
-                    
-                    with st.form(key=f"edit_cat_form_{category.id}"):
-                        new_name = st.text_input(
-                            label="Name",
-                            value=category.name,
-                            max_chars=50,
-                        )
-
-                        new_color = st.color_picker(
-                            label="Farbe",
-                            value=category.color,
-                        )
-
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            if st.form_submit_button("💾 Speichern", use_container_width=True):
-                                category_ctrl.update_category(category.id, name=new_name, color=new_color)
-                                st.session_state.edit_category_id = None
-                                st.success("Kategorie aktualisiert!")
-                                st.rerun()
-
-                        with col2:
-                            if st.form_submit_button("❌ Abbrechen", use_container_width=True):
-                                st.session_state.edit_category_id = None
-                                st.rerun()
-    else:
-        st.info("Keine Kategorien vorhanden.")
-
-    st.divider()
-
-    st.markdown("## ➕ Neue Kategorie")
-
-    with st.form(key="new_category_admin_form"):
-        cat_name = st.text_input(
-            label="Kategorie-Name",
-            placeholder="z.B. Arbeit",
-            max_chars=50,
-        )
-
-        cat_color = st.color_picker(
-            label="Farbe wählen",
-            value="#0078D4",
-        )
-
-        if st.form_submit_button("☑️ Erstellen", use_container_width=True):
-            try:
-                category_ctrl.create_category(cat_name, cat_color)
-                st.success("☑️ Kategorie erstellt!")
-                st.rerun()
-            except ValueError as e:
-                st.error(f"❌ Fehler: {str(e)}")
-
-    render_help_box()

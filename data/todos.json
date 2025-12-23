@@ -1,53 +1,21 @@
 [
   {
-    "id": "aa798b1e-404d-48d1-80d2-ee768104b8aa",
-    "title": "to do erstellen",
-    "description": "",
-    "status": "COMPLETED",
-    "due_date": null,
-    "categories": [
-      "Uni"
-    ],
-    "recurrence": "NONE",
-    "recurrence_interval": 1,
-    "recurrence_end_date": null,
-    "created_at": "2025-12-22T13:10:00.419965",
-    "updated_at": "2025-12-23T12:36:31.579075",
-    "completed_at": "2025-12-23T12:36:31.579067"
-  },
-  {
     "id": "eabc128a-331a-49ac-9ae0-d4db2ba81919",
-    "title": "se",
-    "description": "",
+    "title": "Se",
+    "description": "Ich bin kein mensch. Ich bin ein Roboter.",
     "status": "OPEN",
     "due_date": "2025-12-26",
-    "categories": [
-      "Uni"
-    ],
+    "categories": [],
     "recurrence": "DAILY",
     "recurrence_interval": 1,
     "recurrence_end_date": null,
     "created_at": "2025-12-22T15:10:31.685576",
-    "updated_at": "2025-12-23T14:15:24.880310",
-    "completed_at": null
-  },
-  {
-    "id": "8b926157-aef4-4b0b-be1b-e74801a34dfa",
-    "title": "hey",
-    "description": "",
-    "status": "OPEN",
-    "due_date": "2025-12-28",
-    "categories": [],
-    "recurrence": "NONE",
-    "recurrence_interval": 1,
-    "recurrence_end_date": null,
-    "created_at": "2025-12-23T11:30:55.664633",
-    "updated_at": "2025-12-23T13:38:59.825193",
+    "updated_at": "2025-12-23T14:30:49.056605",
     "completed_at": null
   },
   {
     "id": "a0f1ab04-92ba-46e7-8f66-18dcc3c13126",
-    "title": "hallo",
+    "title": "Hallo",
     "description": "",
     "status": "OPEN",
     "due_date": "2025-12-23",
@@ -56,7 +24,7 @@
     "recurrence_interval": 1,
     "recurrence_end_date": null,
     "created_at": "2025-12-23T12:56:34.983057",
-    "updated_at": "2025-12-23T14:14:59.143492",
+    "updated_at": "2025-12-23T14:30:30.645760",
     "completed_at": null
   }
 ]

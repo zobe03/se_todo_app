@@ -97,18 +97,45 @@ def apply_page_config():
         [data-testid="stRadio"] input {
             cursor: pointer !important;
         }
+
+        /* Date Input - Heutigen Tag markieren */
+        [data-testid="stDateInput"] button[aria-pressed="true"] {
+            background-color: rgba(189, 129, 129, 0.6) !important;
+            border: 2px solid #BD8181 !important;
+        }
+        
+        /* Date Input in Forms */
+        [data-testid="stForm"] [data-testid="stDateInput"] button[aria-pressed="true"] {
+            background-color: rgba(189, 129, 129, 0.6) !important;
+            border: 2px solid #BD8181 !important;
+        }
+        
+        /* Alle Date Input Buttons mit heute Markierung */
+        button[data-baseweb="calendar-day"][aria-pressed="true"] {
+            background-color: rgba(189, 129, 129, 0.6) !important;
+            border: 2px solid #BD8181 !important;
+        }
         </style>
         """, unsafe_allow_html=True)
 
 
 # ===== SECTION 2: UI-Komponenten =====
 
+def hex_to_rgba(hex_color: str, alpha: float = 1.0) -> str:
+    """Konvertiere Hex-Farbe zu RGBA"""
+    hex_color = hex_color.lstrip('#')
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+    return f"rgba({r}, {g}, {b}, {alpha})"
+
+
 def render_filter_sidebar(todo_ctrl: TodoController, category_ctrl: CategoryController) -> Dict:
     """Rendere Filter-Sidebar"""
     st.sidebar.markdown("### 🔍 Aufgabenfilter")
     
     with st.sidebar:
-        with st.expander("***Status:***", expanded=True):
+        with st.expander("***Status:***", expanded=False):
             status_filter = st.radio(
                 label="Status",
                 options=["Alle", "Offen", "Erledigt"],
@@ -116,7 +143,7 @@ def render_filter_sidebar(todo_ctrl: TodoController, category_ctrl: CategoryCont
                 horizontal=False,
             )
 
-        with st.expander("***Kategorie:***", expanded=True):
+        with st.expander("***Kategorie:***", expanded=False):
             categories = [cat.name for cat in category_ctrl.get_categories()]
             category_options = ["Alle"] + categories
             category_filter = st.selectbox(
@@ -125,7 +152,7 @@ def render_filter_sidebar(todo_ctrl: TodoController, category_ctrl: CategoryCont
                 label_visibility="collapsed",
             )
 
-        with st.expander("***Fällig:***", expanded=True):
+        with st.expander("***Fällig:***", expanded=False):
             due_filter = st.radio(
                 label="Fällig",
                 options=["Alle", "Heute", "Diese Woche", "Überfällig"],
@@ -133,7 +160,7 @@ def render_filter_sidebar(todo_ctrl: TodoController, category_ctrl: CategoryCont
                 horizontal=False,
             )
 
-        with st.expander("***Suche:***", expanded=True):
+        with st.expander("***Suche:***", expanded=False):
             search_query = st.text_input(
                 label="Titel durchsuchen",
                 placeholder="Titel eingeben...",
@@ -157,65 +184,6 @@ def render_filter_sidebar(todo_ctrl: TodoController, category_ctrl: CategoryCont
 
     return filters
 
-
-def render_categories_box(category_ctrl: CategoryController):
-    """Rendere Kategorien-Verwaltungs-Box"""
-    st.sidebar.markdown("### 🏷️ Kategorien verwalten")
-
-    with st.sidebar:
-        categories = category_ctrl.get_categories()
-        
-        if categories:
-            for category in categories:
-                col1, col2 = st.columns([5, 1])
-                with col1:
-                    st.markdown(
-                        f'<div style="background-color: {category.color}; color: white; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold;">{category.name}</div>',
-                        unsafe_allow_html=True
-                    )
-                with col2:
-                    if st.button("🗑️", key=f"del_cat_{category.id}", use_container_width=True):
-                        if st.session_state.get("confirm_delete_category") == category.id:
-                            category_ctrl.delete_category(category.id)
-                            st.success("Kategorie gelöscht!")
-                            st.rerun()
-                        else:
-                            st.session_state.confirm_delete_category = category.id
-                            st.warning("Klick nochmal zum Bestätigen")
-
-        is_max = category_ctrl.validate_max_categories()
-        
-        if not is_max:
-            if st.button("➕ Neue Kategorie", use_container_width=True):
-                st.session_state.show_new_category_form = True
-
-        if is_max:
-            st.info("ℹ️ Max. 5 Kategorien erreicht")
-        else:
-            st.info("ℹ️ Max. 5 Kategorien")
-
-        if st.session_state.get("show_new_category_form"):
-            st.markdown("**Neue Kategorie:**")
-            new_cat_name = st.text_input("Name", placeholder="z.B. Arbeit", key="new_cat_name")
-            new_cat_color = st.color_picker("Farbe", value="#0078D4", key="new_cat_color")
-
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("✅ Erstellen", use_container_width=True, key="btn_create_cat"):
-                    try:
-                        category_ctrl.create_category(new_cat_name, new_cat_color)
-                        st.success("Kategorie erstellt!")
-                        st.session_state.show_new_category_form = False
-                        st.rerun()
-                    except ValueError as e:
-                        st.error(f"Fehler: {str(e)}")
-
-            with col2:
-                if st.button("❌ Abbrechen", use_container_width=True, key="btn_cancel_cat"):
-                    st.session_state.show_new_category_form = False
-                    st.rerun()
-
-
 def render_help_box():
     """Rendere Hilfe-Box"""
     st.sidebar.markdown("### Hilfe")
@@ -236,7 +204,7 @@ def render_help_box():
             - Datei: `data/categories.json`
             """)
 
-        st.markdown("Mehr Info: Siehe README.md")
+        st.markdown("Mehr Info: Siehe README.md oder GitHub: https://github.com/zobe03/se_todo_app")
 
 
 def render_status_header(todo_ctrl: TodoController):
@@ -247,30 +215,30 @@ def render_status_header(todo_ctrl: TodoController):
 
     with col1:
         st.markdown(
-            f'<div style="background-color: rgba(189, 129, 129, 0.3); padding: 20px; border-radius: 8px; text-align: center;"><p style="color: #FFFFFF; margin: 0; font-size: 14px;">Gesamt</p><p style="color: #FFFFFF; margin: 8px 0 0 0; font-size: 28px; font-weight: bold;">{stats["total"]}</p></div>',
+            f'<div style="background-color: {hex_to_rgba("#BD8181", 0.3)}; padding: 20px; border-radius: 8px; text-align: center;"><p style="color: #FFFFFF; margin: 0; font-size: 14px;">Gesamt</p><p style="color: #FFFFFF; margin: 8px 0 0 0; font-size: 28px; font-weight: bold;">{stats["total"]}</p></div>',
             unsafe_allow_html=True
         )
 
     with col2:
         st.markdown(
-            f'<div style="background-color: rgba(189, 129, 129, 0.3); padding: 20px; border-radius: 8px; text-align: center;"><p style="color: #FFB900; margin: 0; font-size: 14px;">Offen</p><p style="color: #FFB900; margin: 8px 0 0 0; font-size: 28px; font-weight: bold;">{stats["open"]}</p></div>',
+            f'<div style="background-color: {hex_to_rgba("#BD8181", 0.3)}; padding: 20px; border-radius: 8px; text-align: center;"><p style="color: #FFB900; margin: 0; font-size: 14px;">Offen</p><p style="color: #FFB900; margin: 8px 0 0 0; font-size: 28px; font-weight: bold;">{stats["open"]}</p></div>',
             unsafe_allow_html=True
         )
 
     with col3:
         st.markdown(
-            f'<div style="background-color: rgba(189, 129, 129, 0.3); padding: 20px; border-radius: 8px; text-align: center;"><p style="color: #107C10; margin: 0; font-size: 14px;">Erledigt</p><p style="color: #107C10; margin: 8px 0 0 0; font-size: 28px; font-weight: bold;">{stats["completed"]}</p></div>',
+            f'<div style="background-color: {hex_to_rgba("#BD8181", 0.3)}; padding: 20px; border-radius: 8px; text-align: center;"><p style="color: #107C10; margin: 0; font-size: 14px;">Erledigt</p><p style="color: #107C10; margin: 8px 0 0 0; font-size: 28px; font-weight: bold;">{stats["completed"]}</p></div>',
             unsafe_allow_html=True
         )
 
     with col4:
         st.markdown(
-            f'<div style="background-color: rgba(189, 129, 129, 0.3); padding: 20px; border-radius: 8px; text-align: center;"><p style="color: #D83B01; margin: 0; font-size: 14px;">Überfällig</p><p style="color: #D83B01; margin: 8px 0 0 0; font-size: 28px; font-weight: bold;">{stats["overdue"]}</p></div>',
+            f'<div style="background-color: {hex_to_rgba("#BD8181", 0.3)}; padding: 20px; border-radius: 8px; text-align: center;"><p style="color: #D83B01; margin: 0; font-size: 14px;">Überfällig</p><p style="color: #D83B01; margin: 8px 0 0 0; font-size: 28px; font-weight: bold;">{stats["overdue"]}</p></div>',
             unsafe_allow_html=True
         )
 
     if st.session_state.get("last_action"):
-        st.success(f"✅ {st.session_state.last_action}")
+        st.success(f"☑️ {st.session_state.last_action}")
         st.session_state.last_action = None
 
 
@@ -338,7 +306,7 @@ def render_new_task_form(todo_ctrl: TodoController, category_ctrl: CategoryContr
             col1, col2 = st.columns(2)
 
             with col1:
-                submitted = st.form_submit_button("✅ Aufgabe hinzufügen", use_container_width=True)
+                submitted = st.form_submit_button("☑️ Aufgabe hinzufügen", use_container_width=True)
 
             with col2:
                 st.form_submit_button("🔄 Zurücksetzen", use_container_width=True)
@@ -370,7 +338,7 @@ def render_new_task_form(todo_ctrl: TodoController, category_ctrl: CategoryContr
                     )
 
                     st.session_state.last_action = f"Aufgabe erstellt: '{title}'"
-                    st.success(f"✅ Aufgabe erstellt: {title}")
+                    st.success(f"☑️ Aufgabe erstellt: {title}")
                     st.rerun()
                     return new_todo
 
@@ -511,6 +479,7 @@ def render_edit_todo_modal(
             new_due_date = st.date_input(
                 label="Fälligkeitsdatum",
                 value=todo.due_date,
+                min_value=date.today(),
             )
 
         col1, col2 = st.columns(2)
@@ -615,32 +584,58 @@ def show_categories_page(category_ctrl: CategoryController):
     if categories:
         for category in categories:
             with st.container(border=True):
-                col1, col2, col3, col4 = st.columns([1, 3, 2, 1])
+                col1, col2, col3 = st.columns([5, 0.5, 0.5], vertical_alignment="center")
 
                 with col1:
-                    st.markdown(f"{category.name}", unsafe_allow_html=True)
-
-                with col2:
-                    st.caption(f"Farbe: {category.color}")
-
-                with col3:
-                    new_name = st.text_input(
-                        label="Neuer Name",
-                        value=category.name,
-                        key=f"edit_name_{category.id}",
+                    st.markdown(
+                        f'<div style="background-color: {hex_to_rgba(category.color, 0.5)}; color: white; padding: 12px 15px; border-radius: 6px; text-align: center; font-weight: bold;">{category.name}</div>',
+                        unsafe_allow_html=True
                     )
 
-                with col4:
-                    if st.button("🗑️", key=f"delete_cat_admin_{category.id}"):
-                        category_ctrl.delete_category(category.id)
-                        st.success("Kategorie gelöscht!")
+                with col2:
+                    if st.button("✏️", key=f"edit_cat_{category.id}", use_container_width=True):
+                        st.session_state.edit_category_id = category.id
                         st.rerun()
 
-                if new_name != category.name:
-                    if st.button("💾 Speichern", key=f"save_cat_{category.id}"):
-                        category_ctrl.update_category(category.id, name=new_name)
-                        st.success("Kategorie aktualisiert!")
-                        st.rerun()
+                with col3:
+                    if st.button("🗑️", key=f"delete_cat_admin_{category.id}", use_container_width=True):
+                        if st.session_state.get("confirm_delete_category") == category.id:
+                            category_ctrl.delete_category(category.id)
+                            st.success("Kategorie gelöscht!")
+                            st.rerun()
+                        else:
+                            st.session_state.confirm_delete_category = category.id
+                            st.warning("Klick nochmal zum Bestätigen")
+
+                # Edit Modal
+                if st.session_state.get("edit_category_id") == category.id:
+                    st.divider()
+                    st.markdown("### Kategorie bearbeiten")
+                    
+                    with st.form(key=f"edit_cat_form_{category.id}"):
+                        new_name = st.text_input(
+                            label="Name",
+                            value=category.name,
+                            max_chars=50,
+                        )
+
+                        new_color = st.color_picker(
+                            label="Farbe",
+                            value=category.color,
+                        )
+
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.form_submit_button("💾 Speichern", use_container_width=True):
+                                category_ctrl.update_category(category.id, name=new_name, color=new_color)
+                                st.session_state.edit_category_id = None
+                                st.success("Kategorie aktualisiert!")
+                                st.rerun()
+
+                        with col2:
+                            if st.form_submit_button("❌ Abbrechen", use_container_width=True):
+                                st.session_state.edit_category_id = None
+                                st.rerun()
     else:
         st.info("Keine Kategorien vorhanden.")
 
@@ -667,7 +662,5 @@ def show_categories_page(category_ctrl: CategoryController):
                 st.rerun()
             except ValueError as e:
                 st.error(f"❌ Fehler: {str(e)}")
-
-    render_categories_box(category_ctrl)
 
     render_help_box()

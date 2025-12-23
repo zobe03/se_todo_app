@@ -300,6 +300,70 @@ pip install -r requirements.txt
 pytest testing/ -v
 ```
 
+### Unit Tests
+
+Eine vollständige Test-Suite mit **113 Tests** und **81% Code Coverage** ist verfügbar:
+
+#### Coverage ausführen
+```bash
+# Terminal-Report
+python -m pytest tests/test_unit.py --cov=controllers --cov=models --cov-report=term-missing
+
+# HTML-Report (für Browser)
+python -m pytest tests/test_unit.py --cov=controllers --cov=models --cov-report=html
+open htmlcov/index.html
+```
+
+#### Test-Struktur (`tests/test_unit.py`)
+
+**Getestete Komponenten:**
+- ✅ **Helper-Funktionen**: `capitalize_first_letter()`, `capitalize_sentences()` (7 Tests)
+- ✅ **Todo Model**: Erstellung, Status, Recurrence, Validierung (27 Tests)
+- ✅ **Category Model**: Erstellung, Validierung, Hex-Farben (7 Tests)
+- ✅ **TodoController**: CRUD, Filter, Statistiken, Recurrence (40 Tests)
+- ✅ **CategoryController**: CRUD, Validierung, Farb-Zuweisung (16 Tests)
+- ✅ **Integration Tests**: Komplexe Workflows (2 Tests)
+- ✅ **Edge Cases**: Spezialfälle & Randbedingungen (14 Tests)
+
+#### Test-Coverage nach Modul
+| Modul | Coverage | Status |
+|-------|----------|--------|
+| controllers.py | 97% | ✅ Sehr Gut |
+| models.py | 65% | ✅ Gut |
+| **Gesamt** | **81%** | ✅ **Über Ziel (80%)** |
+
+#### AAA-Pattern (Arrange-Act-Assert)
+Alle Tests folgen dem Standard-Pattern:
+```python
+def test_example():
+    # Arrange: Setup Test-Daten
+    todo = Todo(title="Test")
+    
+    # Act: Aktion ausführen
+    result = todo.toggle_completion()
+    
+    # Assert: Ergebnis prüfen
+    assert result.status == TodoStatus.COMPLETED
+```
+
+#### Mock Storage
+Tests verwenden Mock-Storage statt echten JSON-Dateien:
+- Keine Datei-Operationen
+- Tests unabhängig voneinander
+- Schnelle Ausführung (<1 Sekunde)
+
+#### Getestete Szenarien
+- ✅ Aufgabe hinzufügen (mit Validierung)
+- ✅ Aufgabe entfernen
+- ✅ Aufgabe als erledigt markieren / nicht erledigt
+- ✅ Aufgabe bearbeiten (mit Kapitalisierung)
+- ✅ Fehlerfall: Leere Titel
+- ✅ Fehlerfall: Zu viele Kategorien (>5)
+- ✅ Fehlerfall: Doppelte Kategorien
+- ✅ Wiederholende Aufgaben (täglich, wöchentlich, monatlich)
+- ✅ Datum-Filterung (heute, überfällig, diese Woche)
+- ✅ Kategorien Verwaltung mit Auto-Color-Zuweisung
+
 ### Code-Struktur
 - **Models**: Datenstrukturen, Validierung
 - **Controllers**: Geschäftslogik, keine Streamlit-Imports
@@ -313,6 +377,7 @@ pytest testing/ -v
 - [ ] Collaborative Editing
 - [ ] Dark Mode
 - [ ] Export (PDF, CSV)
+
 
 ---
 

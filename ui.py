@@ -116,6 +116,12 @@ def apply_page_config():
             background-color: rgba(189, 129, 129, 0.6) !important;
             border: 2px solid #BD8181 !important;
         }
+        
+        /* Primary Button für Löschen-Bestätigung - Rot */
+        button[kind="primary"] {
+            background-color: #D83B01 !important;
+            border: 2px solid #D83B01 !important;
+        }
         </style>
         """, unsafe_allow_html=True)
 
@@ -207,13 +213,24 @@ def render_filter_sidebar(todo_ctrl: TodoController, category_ctrl: CategoryCont
                             st.session_state.edit_category_id = category.id
                             st.rerun()
                     with col3:
-                        if st.button("🗑️", key=f"delete_cat_sidebar_{category.id}", use_container_width=True):
-                            if st.session_state.get("confirm_delete_category") == category.id:
-                                category_ctrl.delete_category(category.id)
-                                set_flash_message("Kategorie gelöscht")
-                                st.rerun()
-                            else:
+                        if st.session_state.get("confirm_delete_category") == category.id:
+                            # Zeige Löschen und Abbrechen Buttons
+                            del_col1, del_col2 = st.columns(2)
+                            with del_col1:
+                                if st.button("✓", key=f"confirm_delete_cat_{category.id}", use_container_width=True, type="primary"):
+                                    category_ctrl.delete_category(category.id)
+                                    set_flash_message("Kategorie gelöscht")
+                                    st.session_state.confirm_delete_category = None
+                                    st.rerun()
+                            with del_col2:
+                                if st.button("✗", key=f"cancel_delete_cat_{category.id}", use_container_width=True):
+                                    st.session_state.confirm_delete_category = None
+                                    st.rerun()
+                        else:
+                            # Zeige normalen Löschen Button
+                            if st.button("🗑️", key=f"delete_cat_sidebar_{category.id}", use_container_width=True):
                                 st.session_state.confirm_delete_category = category.id
+                                st.rerun()
         
         # Edit Modal in Sidebar
         if st.session_state.get("edit_category_id"):
@@ -339,6 +356,9 @@ def render_new_task_form(todo_ctrl: TodoController, category_ctrl: CategoryContr
     """Rendere Formular für neue Aufgabe"""
     
     if st.button("## Neue Aufgabe ＋" if not st.session_state.show_new_task_form else "## Schließen ❌", use_container_width=True, key="btn_toggle_form"):
+        # Reset delete confirmations bei jedem anderen Button-Klick
+        st.session_state.confirm_delete_todo = None
+        st.session_state.confirm_delete_category = None
         st.session_state.show_new_task_form = not st.session_state.show_new_task_form
         st.rerun()
 
@@ -489,6 +509,8 @@ def render_task_card(
             )
             # Toggle wenn sich der Status geändert hat
             if new_is_completed != current_is_completed:
+                st.session_state.confirm_delete_todo = None
+                st.session_state.confirm_delete_category = None
                 todo_ctrl.toggle_completion(todo.id)
                 st.rerun()
 
@@ -509,25 +531,49 @@ def render_task_card(
 
                 with btn_col1:
                     if st.button("✏️", key=f"edit_{todo.id}", use_container_width=True):
+                        st.session_state.confirm_delete_todo = None
+                        st.session_state.confirm_delete_category = None
                         st.session_state.edit_todo_id = todo.id
                         st.rerun()
 
                 with btn_col2:
-                    if st.button("🗑️", key=f"delete_{todo.id}", use_container_width=True):
-                        if st.session_state.get("confirm_delete_todo") == todo.id:
+                    if st.session_state.get("confirm_delete_todo") == todo.id:
+                        # Zeige Löschen und Abbrechen Buttons
+                        del_col1, del_col2 = st.columns(2)
+                        with del_col1:
+                            if st.button("✓", key=f"confirm_delete_todo_{todo.id}", use_container_width=True, type="primary"):
+                                todo_ctrl.delete_todo(todo.id)
+                                set_flash_message("Aufgabe gelöscht")
+                                st.session_state.confirm_delete_todo = None
+                                st.rerun()
+                        with del_col2:
+                            if st.button("✗", key=f"cancel_delete_todo_{todo.id}", use_container_width=True):
+                                st.session_state.confirm_delete_todo = None
+                                st.rerun()
+                    else:
+                        # Zeige normalen Löschen Button
+                        if st.button("🗑️", key=f"delete_{todo.id}", use_container_width=True):
+                            st.session_state.confirm_delete_todo = todo.id
+                            st.rerun()
+            else:
+                if st.session_state.get("confirm_delete_todo") == todo.id:
+                    # Zeige Löschen und Abbrechen Buttons
+                    del_col1, del_col2 = st.columns(2)
+                    with del_col1:
+                        if st.button("✓", key=f"confirm_delete_todo_{todo.id}", use_container_width=True, type="primary"):
                             todo_ctrl.delete_todo(todo.id)
                             set_flash_message("Aufgabe gelöscht")
+                            st.session_state.confirm_delete_todo = None
                             st.rerun()
-                        else:
-                            st.session_state.confirm_delete_todo = todo.id
-            else:
-                if st.button("🗑️", key=f"delete_{todo.id}", use_container_width=True):
-                    if st.session_state.get("confirm_delete_todo") == todo.id:
-                        todo_ctrl.delete_todo(todo.id)
-                        set_flash_message("Aufgabe gelöscht")
-                        st.rerun()
-                    else:
+                    with del_col2:
+                        if st.button("✗", key=f"cancel_delete_todo_{todo.id}", use_container_width=True):
+                            st.session_state.confirm_delete_todo = None
+                            st.rerun()
+                else:
+                    # Zeige normalen Löschen Button
+                    if st.button("🗑️", key=f"delete_{todo.id}", use_container_width=True):
                         st.session_state.confirm_delete_todo = todo.id
+                        st.rerun()
 
 
 def render_edit_todo_modal(

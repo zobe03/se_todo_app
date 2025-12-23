@@ -17,16 +17,18 @@
   },
   {
     "id": "eabc128a-331a-49ac-9ae0-d4db2ba81919",
-    "title": "",
+    "title": "se",
     "description": "",
     "status": "OPEN",
-    "due_date": null,
-    "categories": [],
-    "recurrence": "NONE",
+    "due_date": "2025-12-26",
+    "categories": [
+      "Uni"
+    ],
+    "recurrence": "DAILY",
     "recurrence_interval": 1,
     "recurrence_end_date": null,
     "created_at": "2025-12-22T15:10:31.685576",
-    "updated_at": "2025-12-23T13:33:22.006533",
+    "updated_at": "2025-12-23T14:15:24.880310",
     "completed_at": null
   },
   {
@@ -34,13 +36,13 @@
     "title": "hey",
     "description": "",
     "status": "OPEN",
-    "due_date": null,
+    "due_date": "2025-12-28",
     "categories": [],
     "recurrence": "NONE",
     "recurrence_interval": 1,
     "recurrence_end_date": null,
     "created_at": "2025-12-23T11:30:55.664633",
-    "updated_at": "2025-12-23T11:30:55.664639",
+    "updated_at": "2025-12-23T13:38:59.825193",
     "completed_at": null
   },
   {
@@ -48,13 +50,13 @@
     "title": "hallo",
     "description": "",
     "status": "OPEN",
-    "due_date": null,
+    "due_date": "2025-12-23",
     "categories": [],
-    "recurrence": "NONE",
+    "recurrence": "WEEKLY",
     "recurrence_interval": 1,
     "recurrence_end_date": null,
     "created_at": "2025-12-23T12:56:34.983057",
-    "updated_at": "2025-12-23T12:56:34.983068",
+    "updated_at": "2025-12-23T14:14:59.143492",
     "completed_at": null
   }
 ]

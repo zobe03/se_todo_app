@@ -1,7 +1,8 @@
 """UI - Streamlit UI-Komponenten und Pages"""
 
 import streamlit as st
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+import time
 from typing import Optional, List, Dict
 from controllers import TodoController, CategoryController
 from models import Todo, TodoStatus, RecurrenceType
@@ -130,6 +131,12 @@ def hex_to_rgba(hex_color: str, alpha: float = 1.0) -> str:
     return f"rgba({r}, {g}, {b}, {alpha})"
 
 
+def set_flash_message(message: str):
+    """Lege eine flüchtige Success-Meldung mit Zeitstempel ab"""
+    st.session_state.last_action = message
+    st.session_state.last_action_time = datetime.now().timestamp()
+
+
 def render_filter_sidebar(todo_ctrl: TodoController, category_ctrl: CategoryController) -> Dict:
     """Rendere Filter-Sidebar"""
     st.sidebar.markdown("### 🔍 Aufgabenfilter")
@@ -238,8 +245,18 @@ def render_status_header(todo_ctrl: TodoController):
         )
 
     if st.session_state.get("last_action"):
-        st.success(f"☑️ {st.session_state.last_action}")
-        st.session_state.last_action = None
+        ts = st.session_state.get("last_action_time")
+        if ts and (datetime.now().timestamp() - ts) <= 3:
+            placeholder = st.empty()
+            placeholder.success(f"☑️ {st.session_state.last_action}")
+            time.sleep(3)
+            placeholder.empty()
+            st.session_state.last_action = None
+            st.session_state.last_action_time = None
+            st.rerun()
+        else:
+            st.session_state.last_action = None
+            st.session_state.last_action_time = None
 
 
 def render_new_task_form(todo_ctrl: TodoController, category_ctrl: CategoryController) -> Optional[Todo]:
@@ -337,7 +354,7 @@ def render_new_task_form(todo_ctrl: TodoController, category_ctrl: CategoryContr
                         recurrence=recurrence,
                     )
 
-                    st.session_state.last_action = f"Aufgabe erstellt: '{title}'"
+                    set_flash_message(f"Aufgabe erstellt: '{title}'")
                     st.success(f"☑️ Aufgabe erstellt: {title}")
                     st.rerun()
                     return new_todo
@@ -408,7 +425,7 @@ def render_task_card(
             if metadata_str:
                 st.caption(metadata_str)
             if todo.description:
-                st.write(todo.description)
+                st.caption(todo.description)
 
         with col3:
             if show_edit:
@@ -423,7 +440,7 @@ def render_task_card(
                     if st.button("🗑️", key=f"delete_{todo.id}", use_container_width=True):
                         if st.session_state.get("confirm_delete_todo") == todo.id:
                             todo_ctrl.delete_todo(todo.id)
-                            st.session_state.last_action = "Aufgabe gelöscht"
+                            set_flash_message("Aufgabe gelöscht")
                             st.rerun()
                         else:
                             st.session_state.confirm_delete_todo = todo.id
@@ -431,7 +448,7 @@ def render_task_card(
                 if st.button("🗑️", key=f"delete_{todo.id}", use_container_width=True):
                     if st.session_state.get("confirm_delete_todo") == todo.id:
                         todo_ctrl.delete_todo(todo.id)
-                        st.session_state.last_action = "Aufgabe gelöscht"
+                        set_flash_message("Aufgabe gelöscht")
                         st.rerun()
                     else:
                         st.session_state.confirm_delete_todo = todo.id
@@ -447,13 +464,13 @@ def render_edit_todo_modal(
 
     with st.form(key=f"edit_form_{todo.id}"):
         new_title = st.text_input(
-            label="Titel",
+            label="📝 Titel (Pflicht)",
             value=todo.title,
             max_chars=200,
         )
 
         new_description = st.text_area(
-            label="Beschreibung",
+            label="📄 Beschreibung (otional)",
             value=todo.description,
             max_chars=1000,
             height=80,
@@ -464,7 +481,7 @@ def render_edit_todo_modal(
         with col1:
             category_options = ["---"] + [cat.name for cat in category_ctrl.get_categories()]
             new_category = st.selectbox(
-                label="Kategorie",
+                label="🏷️ Kategorie (otional)",
                 options=category_options,
                 index=0 if not todo.categories else (
                     category_options.index(todo.categories[0]) if todo.categories[0] in category_options else 0
@@ -478,7 +495,7 @@ def render_edit_todo_modal(
                 RecurrenceType.MONTHLY: "Monatlich",
             }
             new_recurrence_str = st.selectbox(
-                label="Wiederholung",
+                label="↻ Wiederholung (otional)",
                 options=["Keine", "Täglich", "Wöchentlich", "Monatlich"],
                 index=["Keine", "Täglich", "Wöchentlich", "Monatlich"].index(
                     recurrence_map.get(todo.recurrence, "Keine")
@@ -487,7 +504,7 @@ def render_edit_todo_modal(
 
         with col2:
             new_due_date = st.date_input(
-                label="Fälligkeitsdatum",
+                label="📅 Fälligkeitsdatum (otional)",
                 value=todo.due_date,
                 min_value=date.today(),
             )
@@ -503,6 +520,10 @@ def render_edit_todo_modal(
                 st.rerun()
 
         if submitted:
+            if not new_title or not new_title.strip():
+                st.error("❌ Bitte gib einen Titel ein!")
+                return
+
             try:
                 recurrence_reverse_map = {
                     "Keine": RecurrenceType.NONE,
@@ -525,7 +546,7 @@ def render_edit_todo_modal(
                     recurrence=recurrence,
                 )
 
-                st.session_state.last_action = "Aufgabe aktualisiert"
+                set_flash_message("Aufgabe aktualisiert")
                 st.session_state.edit_todo_id = None
                 st.success("☑️ Aufgabe aktualisiert!")
                 st.rerun()

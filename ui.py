@@ -245,7 +245,7 @@ def render_status_header(todo_ctrl: TodoController):
 def render_new_task_form(todo_ctrl: TodoController, category_ctrl: CategoryController) -> Optional[Todo]:
     """Rendere Formular für neue Aufgabe"""
     
-    if st.button("## Neue Aufgabe ➕" if not st.session_state.show_new_task_form else "## Schließen ✖️", use_container_width=True, key="btn_toggle_form"):
+    if st.button("## Neue Aufgabe ＋" if not st.session_state.show_new_task_form else "## Schließen ❌", use_container_width=True, key="btn_toggle_form"):
         st.session_state.show_new_task_form = not st.session_state.show_new_task_form
         st.rerun()
 
@@ -286,19 +286,19 @@ def render_new_task_form(todo_ctrl: TodoController, category_ctrl: CategoryContr
             with col1:
                 category_options = ["---"] + [cat.name for cat in category_ctrl.get_categories()]
                 selected_category = st.selectbox(
-                    label="🏷️ Kategorie",
+                    label="🏷️ Kategorie (optional)",
                     options=category_options,
                 )
 
                 recurrence_str = st.selectbox(
-                    label="↻ Wiederholung",
+                    label="↻ Wiederholung (optional)",
                     options=["Keine", "Täglich", "Wöchentlich", "Monatlich"],
                 )
 
             with col2:
                 initial_date = selected_quick_date if selected_quick_date else None
                 due_date = st.date_input(
-                    label="📅 Fälligkeitsdatum",
+                    label="📅 Fälligkeitsdatum (optional)",
                     value=initial_date,
                     min_value=date.today(),
                 )

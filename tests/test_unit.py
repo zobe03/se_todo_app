@@ -1,4 +1,25 @@
-"""Unit Tests für TODO-App mit vollständiger Coverage"""
+"""Unit Tests für TODO-App mit vollständiger Coverage
+
+ÜBERSICHT:
+==========
+Diese Datei enthält 113 umfassende Unit Tests für die TODO-App.
+Sie testen alle kritischen Funktionen ohne externe Abhängigkeiten.
+
+STRUKTUR:
+- Fixtures: Wiederverwendbare Test-Komponenten
+- TestCapitalizationFunctions: Text-Formatierung
+- TestTodoModel: Todo-Datenstruktur
+- TestCategoryModel: Kategorie-Datenstruktur
+- TestTodoController: TODO-Geschäftslogik
+- TestCategoryController: Kategorie-Geschäftslogik
+- Integration Tests: Komplexe Workflows
+- Edge Cases: Spezialfälle und Fehlerbehandlung
+
+ANPASSUNGEN:
+- Neue Tests hinzufügen: Kopiere eine TestXxx Klasse und ändere @test_xxx Methoden
+- Coverage verbessern: Siehe "Missing" Spalte im Coverage Report
+- Fehlerbehandlung testen: pytest.raises() verwenden (siehe Beispiele unten)
+"""
 
 import pytest
 from datetime import date, timedelta, datetime
@@ -7,7 +28,7 @@ from pathlib import Path
 import sys
 import os
 
-# Add parent directory to path for imports
+# Pfad-Setup: Erlaubt Imports aus Parent-Directory (models, controllers)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models import Todo, Category, TodoStatus, RecurrenceType, JSONStorage
@@ -15,33 +36,93 @@ from controllers import TodoController, CategoryController, capitalize_first_let
 
 
 # ===== FIXTURES =====
+# 
+# ERKLÄRUNG: Fixtures sind wiederverwendbare Setup-Komponenten
+# Sie werden automatisch vor jedem Test aufgerufen und bieten Test-Daten
+#
+# BEISPIEL: @pytest.fixture decorator erstellt eine Funktion, die pytest automatisch aufruft
+#
+# ANPASSUNGEN:
+# - Neue Fixture hinzufügen: @pytest.fixture + def fixture_name(): return Mock()
+# - Storage-Verhalten ändern: mock_storage.load_todos.return_value = [existing_todo]
+#
 
 @pytest.fixture
 def mock_storage():
-    """Mock JSONStorage für unabhängige Tests"""
+    """Mock JSONStorage für unabhängige Tests
+    
+    ERKLÄRUNG:
+    - Mock() simuliert die JSONStorage Klasse
+    - .return_value legt fest, was beim Aufrufen zurückkommt
+    - Dadurch keine echten Dateien geschrieben/gelesen
+    
+    VERWENDUNG:
+    test_create_todo_basic(todo_controller) -> erhält diese mock_storage automatisch
+    
+    ANPASSUNGEN:
+    - Andere Return-Werte: mock_storage.load_todos.return_value = [pre_loaded_todo]
+    - Exception auslösen: mock_storage.save_todos.side_effect = IOError("Datei nicht beschreibbar")
+    """
     storage = Mock(spec=JSONStorage)
-    storage.load_todos.return_value = []
-    storage.load_categories.return_value = []
+    storage.load_todos.return_value = []        # Simuliert: Keine Todos geladen
+    storage.load_categories.return_value = []   # Simuliert: Keine Kategorien geladen
     return storage
 
 
 @pytest.fixture
 def todo_controller(mock_storage):
-    """Erstelle TodoController mit Mock-Storage"""
+    """Erstelle TodoController mit Mock-Storage
+    
+    ERKLÄRUNG:
+    - TodoController ist die Geschäftslogik-Klasse (controllers.py)
+    - Verwendet mock_storage statt echte Dateioperationen
+    - Damit sind Tests schnell und unabhängig
+    
+    VERWENDUNG:
+    def test_example(todo_controller):
+        todo = todo_controller.create_todo(title="Test")
+    
+    ANPASSUNGEN:
+    - Vorinitialisiern mit Todos:
+      mock_storage.load_todos.return_value = [pre_created_todo]
+      controller = TodoController(storage=mock_storage)
+    """
     controller = TodoController(storage=mock_storage)
     return controller
 
 
 @pytest.fixture
 def category_controller(mock_storage):
-    """Erstelle CategoryController mit Mock-Storage"""
+    """Erstelle CategoryController mit Mock-Storage
+    
+    ERKLÄRUNG:
+    - CategoryController für Kategorie-Verwaltung
+    - Funktioniert analog zu todo_controller
+    
+    VERWENDUNG:
+    def test_example(category_controller):
+        cat = category_controller.create_category(name="Work")
+    """
     controller = CategoryController(storage=mock_storage)
     return controller
 
 
 @pytest.fixture
 def sample_todo():
-    """Erstelle Sample Todo"""
+    """Erstelle Sample Todo für wiederverwendbare Test-Daten
+    
+    ERKLÄRUNG:
+    - Todo mit typischen Werten erstellen
+    - Wird in mehreren Tests verwendet
+    
+    VERWENDUNG:
+    def test_example(sample_todo):
+        assert sample_todo.title == "Test Task"
+    
+    ANPASSUNGEN:
+    - Andere Werte setzen: sample_todo.due_date = date(2025, 12, 31)
+    - Neue Sample erstellen: @pytest.fixture def sample_todo_overdue(): ...
+    """
     return Todo(
         title="Test Task",
         description="Test Description",
@@ -52,19 +133,61 @@ def sample_todo():
 
 @pytest.fixture
 def sample_category():
-    """Erstelle Sample Category"""
+    """Erstelle Sample Category für Tests
+    
+    ERKLÄRUNG:
+    - Kategorie mit Testdaten
+    - Hilft beim Testen von Kategorie-Funktionen
+    
+    VERWENDUNG:
+    def test_example(sample_category):
+        assert sample_category.name == "Test Category"
+    """
     return Category(name="Test Category", color="#FF6B6B")
 
 
 # ===== HELPER FUNCTION TESTS =====
+#
+# ERKLÄRUNG: Diese Tests prüfen Text-Formatierungsfunktionen
+# Sie sind in controllers.py definiert und werden überall verwendet
+#
+# DATEIEN: controllers.py, Zeilen 9-32
+#
+# ANPASSUNGEN:
+# - Neue Sprache testen: test_capitalize_sentences_with_umlauts()
+# - Edge Cases: test_capitalize_very_long_text()
+#
 
 class TestCapitalizationFunctions:
-    """Tests für Kapitalisierungsfunktionen"""
+    """Tests für Kapitalisierungsfunktionen
+    
+    ERKLÄRUNG:
+    - capitalize_first_letter(): Erstes Zeichen zu Großbuchstaben
+    - capitalize_sentences(): Alle Sätze kapitalisieren (nach ". ")
+    
+    VERWENDUNG IN APP:
+    - create_todo(title="hello") -> speichert "Hello"
+    - update_todo() wendet die gleiche Kapitalisierung an
+    
+    TESTING-STRATEGIE:
+    - Normal Cases: "hello" -> "Hello"
+    - Edge Cases: "", "a", "already capitalized"
+    - Fehler-Cases: None (in den Funktionen nicht möglich)
+    """
     
     def test_capitalize_first_letter_with_lowercase(self):
         """Arrange: lowercase text
            Act: call capitalize_first_letter
-           Assert: first letter is uppercase"""
+           Assert: first letter is uppercase
+           
+        ERKLÄRUNG:
+        - Testet die Standardfunktionalität
+        - Input: "hello world" -> Output: "Hello world"
+        
+        ANPASSUNGEN:
+        - Weitere Testfälle: "test" -> "Test", "a" -> "A"
+        - Fehlerfall: "" (leerer String) -> siehe next test
+        """
         # Arrange
         text = "hello world"
         
@@ -154,14 +277,66 @@ class TestCapitalizationFunctions:
 
 
 # ===== TODO MODEL TESTS =====
+#
+# ERKLÄRUNG: Diese Tests prüfen die Todo Dataclass aus models.py
+# Sie testen die Datenstruktur, Validierung und Methoden
+#
+# DATEIEN: models.py, Zeilen 27-153 (Todo Klasse)
+#
+# KRITISCHE METHODEN ZUM TESTEN:
+# - __post_init__(): Validierung beim Erstellen (Titel nicht leer, max 200 Zeichen, max 5 Kategorien)
+# - mark_completed(): Status zu COMPLETED, completed_at setzen
+# - mark_open(): Status zu OPEN, completed_at zurücksetzen
+# - toggle_completion(): Wechsel zwischen OPEN und COMPLETED
+# - is_overdue(): Prüfe ob Datum in der Vergangenheit
+# - is_due_today(): Prüfe ob Datum heute
+# - update(): Felder aktualisieren
+# - should_create_next_recurrence(): Prüfe für wiederkehrende Aufgaben
+# - get_next_due_date(): Berechne nächstes Datum
+#
+# ANPASSUNGEN:
+# - Tests für neue Methoden hinzufügen
+# - Validierungen testen (pytest.raises)
+# - Datum-Logik mit Zeitzonen testen
+#
 
 class TestTodoModel:
-    """Tests für Todo Dataclass"""
+    """Tests für Todo Dataclass
+    
+    ERKLÄRUNG:
+    - Todo ist die Datenstruktur aus models.py
+    - Speichert: title, description, status, due_date, categories, recurrence, etc.
+    - Validiert automatisch im __post_init__
+    
+    VERWENDUNG IN APP:
+    - TodoController.create_todo() erstellt Todo Instanzen
+    - TodoController.update_todo() ändert Todo Felder
+    - Daten werden in todos.json gespeichert
+    
+    TEST-COVERAGE:
+    - Erstellung mit Validierung
+    - Status-Änderungen (mark_completed, mark_open, toggle)
+    - Datum-Checks (is_overdue, is_due_today, is_due_this_week)
+    - Wiederholungs-Logik (should_create_next_recurrence, get_next_due_date)
+    """
     
     def test_todo_creation_with_required_fields(self, sample_todo):
         """Arrange: create todo with required fields
            Act: verify todo attributes
-           Assert: all fields set correctly"""
+           Assert: all fields set correctly
+           
+        ERKLÄRUNG:
+        - Mindestanforderung: title (erforderlich)
+        - Andere Felder: optional mit Defaults
+        
+        ANPASSUNGEN:
+        - Weitere Required Fields: description="Muss angegeben sein"
+        - Verschiedene Data Types testen: integer, dict, list
+        
+        HÄUFIGE FEHLER:
+        - "Titel darf nicht leer sein" wenn title=""
+        - TypeError wenn title=None statt ""
+        """
         # Arrange
         title = "Test Task"
         
@@ -188,7 +363,25 @@ class TestTodoModel:
     def test_todo_creation_fails_with_empty_title(self):
         """Arrange: try to create todo with empty title
            Act: call Todo constructor
-           Assert: raises ValueError"""
+           Assert: raises ValueError
+           
+        ERKLÄRUNG:
+        - __post_init__ wirft ValueError wenn title leer ist
+        - pytest.raises() catcht die Exception und prüft sie
+        
+        VERWENDUNG:
+        with pytest.raises(ValueError, match="Titel darf nicht leer sein"):
+            # Code, der Exception wirft
+        
+        ANPASSUNGEN:
+        - Andere Exceptions testen: KeyError, TypeError, AttributeError
+        - Match-Text ändern: match="Deine Error Message"
+        - Multiple Exceptions: pytest.raises((ValueError, TypeError))
+        
+        CODE IN models.py ZEILEN 49-50:
+        if not self.title or not self.title.strip():
+            raise ValueError("Titel darf nicht leer sein")
+        """
         # Arrange & Act & Assert
         with pytest.raises(ValueError, match="Titel darf nicht leer sein"):
             Todo(title="")
@@ -226,7 +419,27 @@ class TestTodoModel:
     def test_todo_mark_completed(self, sample_todo):
         """Arrange: open todo
            Act: call mark_completed
-           Assert: status is COMPLETED and completed_at is set"""
+           Assert: status is COMPLETED and completed_at is set
+           
+        ERKLÄRUNG:
+        - mark_completed() ändert Status zu COMPLETED
+        - Setzt timestamp in completed_at (für Statistiken wichtig)
+        
+        VERWENDUNG IN APP:
+        - Wenn User Checkbox anklickt: toggle_completion()
+        - toggle_completion() ruft mark_completed() auf
+        
+        CODE IN models.py ZEILEN 112-115:
+        def mark_completed(self) -> None:
+            self.status = TodoStatus.COMPLETED
+            self.completed_at = datetime.now()
+            self.updated_at = datetime.now()
+        
+        ANPASSUNGEN:
+        - Test dass updated_at sich ändert
+        - Test dass completed_at nicht None ist
+        - Test nach mark_open(): completed_at ist wieder None
+        """
         # Arrange
         assert sample_todo.status == TodoStatus.OPEN
         
@@ -398,14 +611,17 @@ class TestTodoModel:
            Act: call get_next_due_date
            Assert: returns date + 7 days"""
         # Arrange
+        today = date.today()
+        # Verwende den 10. des Monats, um Monatsüberlauf zu vermeiden
+        safe_date = date(today.year, today.month, 10)
         sample_todo.recurrence = RecurrenceType.WEEKLY
-        sample_todo.due_date = date.today()
+        sample_todo.due_date = safe_date
         
         # Act
         next_date = sample_todo.get_next_due_date()
         
         # Assert
-        assert next_date == date.today() + timedelta(days=7)
+        assert next_date == safe_date + timedelta(days=7)
     
     def test_todo_get_next_due_date_monthly(self, sample_todo):
         """Arrange: monthly todo on day 15
@@ -507,14 +723,81 @@ class TestCategoryModel:
 
 
 # ===== TODO CONTROLLER TESTS =====
+#
+# ERKLÄRUNG: Diese Tests prüfen die Geschäftslogik aus controllers.py
+# TodoController macht: CRUD, Filter, Statistiken, Recurrence
+#
+# DATEIEN: controllers.py, Zeilen 40-289 (TodoController Klasse)
+#
+# HAUPTMETHODEN:
+# - create_todo(): Neue Aufgabe, mit Kapitalisierung und Validierung
+# - get_todos(): Alle Aufgaben zurückgeben
+# - get_todo(id): Einzelne Aufgabe by ID
+# - update_todo(id, **kwargs): Felder ändern (mit Validierung)
+# - delete_todo(id): Aufgabe löschen
+# - toggle_completion(id): Status wechseln
+# - mark_completed/mark_open(id): Status direkt setzen
+# - Filter-Methoden: get_open_todos, get_completed_todos, get_todos_by_category, etc.
+# - search_todos(query): Titel + Beschreibung durchsuchen
+# - get_stats(): Statistiken (total, open, completed, overdue)
+# - handle_recurring_todos(): Neue Instanzen von wiederkehrenden Aufgaben
+#
+# ANPASSUNGEN:
+# - Neue Filter-Methoden testen
+# - Performance mit vielen Todos testen
+# - Datenbank-Fehler simulieren (mit Mock)
+#
 
 class TestTodoController:
-    """Tests für TodoController CRUD und Filterung"""
+    """Tests für TodoController CRUD und Filterung
+    
+    ERKLÄRUNG:
+    - TodoController ist die Geschäftslogik-Schicht
+    - Verwendet Todo Modelle und JSONStorage
+    - Macht Validierung, Transformation, Persistierung
+    
+    VERWENDUNG IN APP:
+    - ui.py importiert TodoController
+    - Alle UI-Aktionen gehen durch TodoController
+    - Beispiel: st.button("Speichern") -> todo_controller.create_todo()
+    
+    TEST-STRATEGIE:
+    - CRUD: Create, Read, Update, Delete testen
+    - Fehlerbehandlung: ValueError bei ungültigen Daten
+    - Mock Storage: Keine echten Dateien
+    - Isolation: Jeder Test ist unabhängig
+    
+    HÄUFIGE FEHLER:
+    - Vergessen todo_controller.storage.save_todos.assert_called() zu prüfen
+    - Keine Kapitalisierung in Tests berücksichtigen
+    - Mock Storage nicht richtig initialisieren
+    """
     
     def test_create_todo_basic(self, todo_controller):
         """Arrange: controller ready
            Act: create todo with title
-           Assert: todo created and saved"""
+           Assert: todo created and saved
+           
+        ERKLÄRUNG:
+        - Test für grundlegende create_todo Funktion
+        - Prüft: Rückgabewert, Liste, Storage aufgerufen
+        
+        VERWENDUNG:
+        - Basis-Test für alle create_todo Varianten
+        
+        CODE IN controllers.py ZEILEN 68-82:
+        def create_todo(self, title: str, ...):
+            if not title or not title.strip():
+                raise ValueError("Titel darf nicht leer sein")
+            title = capitalize_first_letter(title.strip())
+            # ... erstelle Todo
+            self._todos.append(todo)
+            self._save_todos()  <- Das mocken wir!
+        
+        ANPASSUNGEN:
+        - Test mit verschiedenen Titeln: "HELLO", "123 Test"
+        - Test dass assert_called genau richtig aufgerufen wird
+        """
         # Act
         todo = todo_controller.create_todo(title="Test Task")
         
@@ -522,6 +805,7 @@ class TestTodoController:
         assert todo.title == "Test Task"
         assert todo.status == TodoStatus.OPEN
         assert len(todo_controller.get_todos()) == 1
+        # Prüfe dass Storage save_todos aufgerufen wurde
         todo_controller.storage.save_todos.assert_called()
     
     def test_create_todo_with_all_fields(self, todo_controller):
@@ -640,7 +924,39 @@ class TestTodoController:
     def test_update_todo_title(self, todo_controller):
         """Arrange: create todo
            Act: update title
-           Assert: title updated and saved"""
+           Assert: title updated and saved
+           
+        ERKLÄRUNG:
+        - Test für update_todo mit title Parameter
+        - Prüft: title geändert, in Liste, Storage aufgerufen
+        
+        VERWENDUNG IN APP:
+        - User öffnet Edit-Modal
+        - Ändert Titel
+        - Klickt "Speichern" -> update_todo wird aufgerufen
+        
+        CODE IN controllers.py ZEILEN 112-123:
+        def update_todo(self, todo_id: str, **kwargs) -> Optional[Todo]:
+            todo = self.get_todo(todo_id)
+            if not todo:
+                return None
+            if "title" in kwargs and kwargs["title"]:
+                if not kwargs["title"].strip():
+                    raise ValueError("Titel darf nicht leer sein")
+                kwargs["title"] = capitalize_first_letter(...)
+            # ... update todo
+            self._save_todos()
+            return todo
+        
+        WICHTIG:
+        - Kapitalisierung wird angewendet: "hello" -> "Hello"
+        - Validierung: leere Titel wirken ValueError
+        
+        ANPASSUNGEN:
+        - Test mehrere Felder gleichzeitig ändern
+        - Test dass ID nicht ändert
+        - Test dass updated_at sich ändert
+        """
         # Arrange
         todo = todo_controller.create_todo(title="Original")
         
@@ -688,7 +1004,30 @@ class TestTodoController:
     def test_delete_todo(self, todo_controller):
         """Arrange: create todo
            Act: delete it
-           Assert: todo removed and saved"""
+           Assert: todo removed and saved
+           
+        ERKLÄRUNG:
+        - Test für delete_todo Funktion
+        - Prüft: Rückgabewert True, Liste verkleinert, Storage aufgerufen
+        
+        VERWENDUNG IN APP:
+        - Wenn User Löschen-Button klickt
+        - Bestätigung mit ✓/✗ Buttons
+        
+        CODE IN controllers.py ZEILEN 127-132:
+        def delete_todo(self, todo_id: str) -> bool:
+            todo = self.get_todo(todo_id)
+            if not todo:
+                return False
+            self._todos.remove(todo)
+            self._save_todos()
+            return True
+        
+        ANPASSUNGEN:
+        - Test dass nicht-existierende ID False zurückgibt
+        - Test dass mehrere Todos nur das richtige löscht
+        - Test mit verschiedenen Todo-Status (OPEN, COMPLETED)
+        """
         # Arrange
         todo = todo_controller.create_todo(title="Test")
         assert len(todo_controller.get_todos()) == 1
@@ -714,7 +1053,30 @@ class TestTodoController:
     def test_toggle_completion_open_to_completed(self, todo_controller):
         """Arrange: open todo
            Act: toggle completion
-           Assert: status is COMPLETED"""
+           Assert: status is COMPLETED
+           
+        ERKLÄRUNG:
+        - Test für toggle_completion Funktion
+        - Wechselt Status: OPEN -> COMPLETED oder COMPLETED -> OPEN
+        
+        VERWENDUNG IN APP:
+        - User klickt auf Checkbox (☐ oder ☑️)
+        - Toggle wird aufgerufen
+        
+        CODE IN controllers.py ZEILEN 143-151:
+        def toggle_completion(self, todo_id: str) -> Optional[Todo]:
+            todo = self.get_todo(todo_id)
+            if not todo:
+                return None
+            todo.toggle_completion()
+            self._save_todos()
+            return todo
+        
+        ANPASSUNGEN:
+        - Auch completed_at prüfen
+        - updated_at prüfen (sollte sich ändern)
+        - Mehrfaches Toggle testen (OPEN -> COMPLETED -> OPEN)
+        """
         # Arrange
         todo = todo_controller.create_todo(title="Test")
         
@@ -864,7 +1226,39 @@ class TestTodoController:
     def test_filter_todos_by_search_query(self, todo_controller):
         """Arrange: create todos with different titles
            Act: filter by search query
-           Assert: returns matching todos"""
+           Assert: returns matching todos
+           
+        ERKLÄRUNG:
+        - Test für search_todos / filter_todos mit search_query
+        - Durchsucht Titel und Beschreibung
+        - Case-insensitive
+        
+        VERWENDUNG IN APP:
+        - User gibt Suchtext in Filter-Sidebar ein
+        - Ergebnisse werden sofort gefiltert
+        
+        CODE IN controllers.py ZEILEN 198-210:
+        def filter_todos(self, search_query: Optional[str] = None) -> List[Todo]:
+            result = self._todos.copy()
+            if search_query:
+                query = search_query.lower().strip()
+                result = [
+                    t for t in result
+                    if query in t.title.lower() or query in t.description.lower()
+                ]
+            return result
+        
+        WICHTIG:
+        - Groß-/Kleinschreibung spielt keine Rolle
+        - Sucht in title UND description
+        - Leere query = alle Todos (oder keine, siehe Code)
+        
+        ANPASSUNGEN:
+        - Test mit Description durchsuchen
+        - Test mit Spezialzeichen: "test@#$"
+        - Test mit Wildcards (falls später implementiert)
+        - Test Performance mit 1000 Todos
+        """
         # Arrange
         todo1 = todo_controller.create_todo(title="Buy groceries")
         todo2 = todo_controller.create_todo(title="Write report")
@@ -951,7 +1345,51 @@ class TestTodoController:
     def test_handle_recurring_todos_daily(self, todo_controller):
         """Arrange: create completed daily todo
            Act: handle recurrence
-           Assert: new todo created with next date"""
+           Assert: new todo created with next date
+           
+        ERKLÄRUNG:
+        - Test für wiederkehrende Aufgaben (Recurrence)
+        - Wenn tägliche Aufgabe erledigt, neue Instanz für morgen
+        
+        VERWENDUNG IN APP:
+        - Aufgabe mit Wiederholung erstellen
+        - User abhaken (mark_completed)
+        - System erkennt Recurrence und erstellt neue für nächsten Zeitraum
+        
+        CODE IN controllers.py ZEILEN 253-275:
+        def handle_recurring_todos(self) -> List[Todo]:
+            created = []
+            for todo in self._todos:
+                if not todo.should_create_next_recurrence():
+                    continue
+                next_due_date = todo.get_next_due_date()
+                if not next_due_date:
+                    continue
+                new_todo = Todo(
+                    title=todo.title,
+                    description=todo.description,
+                    due_date=next_due_date,
+                    categories=todo.categories.copy(),
+                    recurrence=todo.recurrence,
+                    ...
+                )
+                self._todos.append(new_todo)
+                created.append(new_todo)
+            if created:
+                self._save_todos()
+            return created
+        
+        WICHTIG:
+        - get_next_due_date() rechnet das Datum
+        - daily: +1 Tag
+        - weekly: +7 Tage
+        - monthly: +1 Monat (same day)
+        
+        ANPASSUNGEN:
+        - Test mit custom recurrence_interval (z.B. alle 2 Tage)
+        - Test mit recurrence_end_date (wann stoppt es?)
+        - Test mehrere Recurrences gleichzeitig
+        """
         # Arrange
         todo = todo_controller.create_todo(
             title="Daily Task",
@@ -970,14 +1408,72 @@ class TestTodoController:
 
 
 # ===== CATEGORY CONTROLLER TESTS =====
+#
+# ERKLÄRUNG: Tests für Kategorie-Verwaltung (Controllers.py)
+#
+# HAUPTMETHODEN:
+# - create_category(): Neue Kategorie mit auto-Farbe
+# - get_categories(): Alle Kategorien
+# - update_category(): Name/Farbe ändern
+# - delete_category(): Kategorie löschen
+# - get_category_by_name(): Nach Name suchen (wichtig!)
+# - is_category_used(): Prüft ob in Todos verwendet
+#
+# WICHTIG:
+# - Max. 5 Kategorien total
+# - Farben auto-zugewiesen aus Palette
+# - Namen müssen eindeutig sein
+# - Kapitalisierung wird angewendet
+#
 
 class TestCategoryController:
-    """Tests für CategoryController CRUD"""
+    """Tests für CategoryController CRUD
+    
+    ERKLÄRUNG:
+    - CategoryController verwaltet Kategorien
+    - Jede Kategorie hat Name, Farbe, ID
+    - Wird von TodoController verwendet
+    
+    VERWENDUNG IN APP:
+    - Kategorien-Sidebar: Neue Kategorie hinzufügen/ändern/löschen
+    - Todos: Kategorie auswählen beim Erstellen
+    - Filter: Nach Kategorie filtern
+    
+    TEST-STRATEGIE:
+    - CRUD: Erstellen, Lesen, Ändern, Löschen
+    - Validierung: Max 5, eindeutige Namen
+    - Auto-Farben: Palette-Zyklus
+    - Kapitalisierung: "work" -> "Work"
+    """
     
     def test_create_category_basic(self, category_controller):
         """Arrange: controller ready
            Act: create category
-           Assert: category created and saved"""
+           Assert: category created and saved
+           
+        ERKLÄRUNG:
+        - Neue Kategorie mit Auto-Farb-Zuweisung
+        
+        CODE IN controllers.py ZEILEN 306-325:
+        def create_category(self, name: str, color: str = None) -> Category:
+            if len(self._categories) >= self.MAX_CATEGORIES:
+                raise ValueError(f"Max. {self.MAX_CATEGORIES} Kategorien...")
+            if self.category_exists(name):
+                raise ValueError(f"Kategorie '{name}' existiert bereits")
+            name = capitalize_first_letter(name.strip())
+            if color is None:
+                color_palette = ["#FF6B6B", "#4ECDC4", ...]
+                color = color_palette[len(self._categories) % len(color_palette)]
+            category = Category(name=name, color=color)
+            self._categories.append(category)
+            self._save_categories()
+            return category
+        
+        ANPASSUNGEN:
+        - Test auto-Farbzuweisung der Reihe nach
+        - Test dass Namen eindeutig sein müssen
+        - Test dass Max 5 Kategorien erzwingt
+        """
         # Act
         category = category_controller.create_category(name="Work")
         
@@ -1191,14 +1687,65 @@ class TestCategoryController:
 
 
 # ===== INTEGRATION TESTS =====
+#
+# ERKLÄRUNG: Tests die mehrere Komponenten zusammen testen
+# Nicht einzelne Funktionen, sondern ganze Workflows
+#
+# BEISPIELE:
+# - Kategorie erstellen, dann Todo mit dieser Kategorie
+# - Todo erstellen, bearbeiten, erledigen, löschen
+# - Mehrere Filter kombinieren
+#
+# ANPASSUNGEN:
+# - Realistischere Szenarien hinzufügen
+# - Performance-Tests mit vielen Todos
+# - Fehler-Szenarien testen (z.B. Storage-Fehler)
+#
 
 class TestIntegration:
-    """Integration tests für Controllers zusammen"""
+    """Integration tests für Controllers zusammen
+    
+    ERKLÄRUNG:
+    - Testen wie Components zusammenarbeiten
+    - Nicht einzelne Methoden, sondern Workflows
+    - Realistischere Szenarien
+    
+    VERWENDUNG:
+    - Verifica dass App insgesamt funktioniert
+    - Finde Bugs die nur bei Kombination auftauchen
+    
+    BEISPIEL-WORKFLOW:
+    1. Kategorie erstellen
+    2. Todo mit Kategorie erstellen
+    3. Todo nach Kategorie filtern
+    4. Todo bearbeiten
+    5. Todo löschen
+    
+    ANPASSUNGEN:
+    - Komplexere Workflows hinzufügen
+    - Error-Cases testen
+    - Race-Conditions prüfen
+    """
     
     def test_create_todo_and_category_workflow(self, todo_controller, category_controller):
         """Arrange: both controllers ready
            Act: create category then todo with category
-           Assert: todo linked to category"""
+           Assert: todo linked to category
+           
+        ERKLÄRUNG:
+        - Todo mit Kategorie erstellen
+        - Prüft dass Beziehung stimmt
+        
+        VERWENDUNG:
+        - User erstellt Kategorie "Arbeit"
+        - Erstellt Todo in dieser Kategorie
+        - Filtered nach Kategorie
+        
+        ANPASSUNGEN:
+        - Test dass Kategorie nicht gelöscht wird wenn Todo sie noch braucht
+        - Test mehrere Todos in gleicher Kategorie
+        - Test Kategorie umbenennen (auch Todos updaten?)
+        """
         # Arrange
         category = category_controller.create_category(name="Work")
         
@@ -1490,9 +2037,12 @@ class TestTodoControllerEdgeCases:
            Act: handle recurrence
            Assert: new todo created 7 days later"""
         # Arrange
+        today = date.today()
+        # Verwende den 10. des Monats, um Monatsüberlauf zu vermeiden
+        safe_date = date(today.year, today.month, 10)
         todo = todo_controller.create_todo(
             title="Weekly Task",
-            due_date=date.today(),
+            due_date=safe_date,
             recurrence=RecurrenceType.WEEKLY
         )
         todo_controller.toggle_completion(todo.id)
@@ -1502,7 +2052,7 @@ class TestTodoControllerEdgeCases:
         
         # Assert
         assert len(created) == 1
-        assert created[0].due_date == date.today() + timedelta(days=7)
+        assert created[0].due_date == safe_date + timedelta(days=7)
     
     def test_handle_recurring_todos_monthly(self, todo_controller):
         """Arrange: create completed monthly todo

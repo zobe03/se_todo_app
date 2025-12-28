@@ -4,8 +4,8 @@ import streamlit as st
 from datetime import date, timedelta, datetime
 import time
 from typing import Optional, List, Dict
-from app.controllers import TodoController, CategoryController
-from app.models import Todo, TodoStatus, RecurrenceType
+from controllers import TodoController, CategoryController
+from models import Todo, TodoStatus, RecurrenceType
 
 
 # ===== SECTION 1: Styles & Configuration =====

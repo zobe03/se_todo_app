@@ -14,8 +14,8 @@ import pytest
 # Erlaubt Importe aus dem Projektwurzelverzeichnis (ggf. anpassen, falls Projektstruktur geändert wird)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.controllers import TodoController  # noqa: E402
-from app.models import JSONStorage, TodoStatus  # noqa: E402
+from controllers import TodoController  # noqa: E402
+from models import JSONStorage, TodoStatus  # noqa: E402
 
 
 @pytest.fixture()

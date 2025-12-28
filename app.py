@@ -1,8 +1,8 @@
 """App Main Entry Point - Streamlit Todo App"""
 
 import streamlit as st
-from app.ui import apply_page_config, show_todo_list_page
-from app.controllers import TodoController, CategoryController
+from ui import apply_page_config, show_todo_list_page
+from controllers import TodoController, CategoryController
 
 
 # ===== Page Config =====

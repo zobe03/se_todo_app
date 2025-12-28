@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Dict, Any
 from datetime import date
-from app.models import (
+from models import (
     Todo, TodoStatus, RecurrenceType, Category, JSONStorage,
     ExternalTaskAPI, ExternalTaskAdapter, ExternalTaskImporter, ExternalTask
 )

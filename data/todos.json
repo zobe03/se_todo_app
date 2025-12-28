@@ -1,21 +1,5 @@
 [
   {
-    "id": "e321796e-3ae1-44e2-a12c-8f03e765dfbb",
-    "title": "Bjki",
-    "description": "",
-    "status": "OPEN",
-    "due_date": null,
-    "categories": [
-      "Arbeit"
-    ],
-    "recurrence": "NONE",
-    "recurrence_interval": 1,
-    "recurrence_end_date": null,
-    "created_at": "2025-12-23T15:25:17.789431",
-    "updated_at": "2025-12-23T15:25:17.789437",
-    "completed_at": null
-  },
-  {
     "id": "2e073c37-9358-4d2c-b14b-8dc73418c11c",
     "title": "Bkibb",
     "description": "",
@@ -28,5 +12,223 @@
     "created_at": "2025-12-23T15:28:15.278468",
     "updated_at": "2025-12-23T15:28:15.278475",
     "completed_at": null
+  },
+  {
+    "id": "ctrl-1",
+    "title": "external task 1",
+    "description": "",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [
+      "Urgent"
+    ],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.582225",
+    "updated_at": "2025-12-28T12:15:07.582237",
+    "completed_at": null
+  },
+  {
+    "id": "ctrl-2",
+    "title": "external task 2",
+    "description": "",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [
+      "work"
+    ],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.582245",
+    "updated_at": "2025-12-28T12:15:07.582248",
+    "completed_at": null
+  },
+  {
+    "id": "8e7b53da-3dee-46eb-8e06-ad4328859bd7",
+    "title": "Existing",
+    "description": "",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.626790",
+    "updated_at": "2025-12-28T12:15:07.626793",
+    "completed_at": null
+  },
+  {
+    "id": "new-1",
+    "title": "New Task",
+    "description": "",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.627170",
+    "updated_at": "2025-12-28T12:15:07.627172",
+    "completed_at": null
+  },
+  {
+    "id": "a6a1ef1d-3bb8-4eb8-86af-b7c1e4b8e200",
+    "title": "Old title",
+    "description": "",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.639705",
+    "updated_at": "2025-12-28T12:15:07.639709",
+    "completed_at": null
+  },
+  {
+    "id": "e321796e-3ae1-44e2-a12c-8f03e765dfbb",
+    "title": "New Title",
+    "description": "Updated",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.640061",
+    "updated_at": "2025-12-28T12:15:07.640066",
+    "completed_at": null
+  },
+  {
+    "id": "044c9efe-5219-4b39-a59b-4f64ca729a7f",
+    "title": "Original",
+    "description": "",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.653218",
+    "updated_at": "2025-12-28T12:15:07.653221",
+    "completed_at": null
+  },
+  {
+    "id": "9be28b43-ddb2-42ee-a1ff-941b73deaa9b",
+    "title": "Import",
+    "description": "",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.653790",
+    "updated_at": "2025-12-28T12:15:07.653875",
+    "completed_at": null
+  },
+  {
+    "id": "c293e4ef-181d-48ac-8097-f0b3d03176a8",
+    "title": "Export 1",
+    "description": "",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [
+      "Urgent"
+    ],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.668083",
+    "updated_at": "2025-12-28T12:15:07.668087",
+    "completed_at": null
+  },
+  {
+    "id": "9ec13056-ee78-4604-96bd-29c03d46a077",
+    "title": "Export 2",
+    "description": "",
+    "status": "OPEN",
+    "due_date": "2025-12-31",
+    "categories": [],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.668504",
+    "updated_at": "2025-12-28T12:15:07.668507",
+    "completed_at": null
+  },
+  {
+    "id": "d05e09b7-f7e0-4828-8418-47d915750e66",
+    "title": "Export this",
+    "description": "",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.681675",
+    "updated_at": "2025-12-28T12:15:07.681678",
+    "completed_at": null
+  },
+  {
+    "id": "0ad1849f-614d-4726-8ae3-c82c76882e67",
+    "title": "Not this",
+    "description": "",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.682160",
+    "updated_at": "2025-12-28T12:15:07.682163",
+    "completed_at": null
+  },
+  {
+    "id": "wf-1",
+    "title": "Workflow Task 1",
+    "description": "",
+    "status": "OPEN",
+    "due_date": "2025-12-01",
+    "categories": [
+      "Urgent"
+    ],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.684150",
+    "updated_at": "2025-12-28T12:15:07.684158",
+    "completed_at": null
+  },
+  {
+    "id": "wf-2",
+    "title": "Workflow Task 2",
+    "description": "",
+    "status": "OPEN",
+    "due_date": null,
+    "categories": [],
+    "recurrence": "WEEKLY",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.684162",
+    "updated_at": "2025-12-28T12:15:07.684164",
+    "completed_at": null
+  },
+  {
+    "id": "wf-3",
+    "title": "Workflow Task 3",
+    "description": "",
+    "status": "COMPLETED",
+    "due_date": null,
+    "categories": [],
+    "recurrence": "NONE",
+    "recurrence_interval": 1,
+    "recurrence_end_date": null,
+    "created_at": "2025-12-28T12:15:07.684167",
+    "updated_at": "2025-12-28T12:15:07.684169",
+    "completed_at": "2025-12-28T12:15:07.684169"
   }
 ]

@@ -31,8 +31,8 @@ import os
 # Pfad-Setup: Erlaubt Imports aus Parent-Directory (models, controllers)
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from models import Todo, Category, TodoStatus, RecurrenceType, JSONStorage
-from controllers import TodoController, CategoryController, capitalize_first_letter, capitalize_sentences
+from app.models import Todo, Category, TodoStatus, RecurrenceType, JSONStorage
+from app.controllers import TodoController, CategoryController, capitalize_first_letter, capitalize_sentences
 
 
 # ===== FIXTURES =====

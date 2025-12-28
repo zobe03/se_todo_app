@@ -77,6 +77,102 @@ class Todo:
         else:
             self.mark_open()
 
+    # ===== FACTORY METHODS (Erzeugungsmuster) =====
+    
+    @classmethod
+    def create_standard(cls, title: str, description: str = "", 
+                       categories: Optional[List[str]] = None) -> "Todo":
+        """Factory Method: Erstellt Standard-Todo ohne Fälligkeitsdatum.
+        
+        Verwendung:
+        - Allgemeine Aufgaben ohne spezielle Anforderungen
+        - Client-Code muss konkrete Initialisierung nicht kennen
+        
+        Live-Coding-Anpassungen:
+        - Default-Kategorien ergänzen: categories = categories or ["General"]
+        - Priorität hinzufügen
+        """
+        return cls(
+            title=title,
+            description=description,
+            categories=categories or []
+        )
+    
+    @classmethod
+    def create_urgent(cls, title: str, description: str = "",
+                     categories: Optional[List[str]] = None) -> "Todo":
+        """Factory Method: Erstellt dringende Aufgabe mit Fälligkeit heute.
+        
+        Vorteile:
+        - Automatisches "Urgent"-Tag
+        - Fälligkeit immer gesetzt (heute)
+        - Einheitliche Erstellung dringender Aufgaben
+        
+        Live-Coding-Anpassungen:
+        - Stunden-Offset: due_date=date.today() + timedelta(hours=4)
+        - Notification-Flag setzen
+        """
+        cats = categories or []
+        if "Urgent" not in cats:
+            cats.append("Urgent")
+        
+        return cls(
+            title=title,
+            description=description,
+            due_date=date.today(),
+            categories=cats
+        )
+    
+    @classmethod
+    def create_recurring(cls, title: str, recurrence_type: RecurrenceType,
+                        interval: int = 1, description: str = "",
+                        start_date: Optional[date] = None,
+                        end_date: Optional[date] = None,
+                        categories: Optional[List[str]] = None) -> "Todo":
+        """Factory Method: Erstellt wiederkehrende Aufgabe.
+        
+        Verwendung:
+        - Regelmäßige Aufgaben (täglich, wöchentlich, monatlich)
+        - Wiederholungs-Logik vorkonfiguriert
+        
+        Live-Coding-Anpassungen:
+        - Automatische End-Date-Berechnung
+        - Max-Wiederholungen statt End-Date
+        - "Recurring"-Kategorie automatisch hinzufügen
+        """
+        return cls(
+            title=title,
+            description=description,
+            due_date=start_date or date.today(),
+            categories=categories or [],
+            recurrence=recurrence_type,
+            recurrence_interval=interval,
+            recurrence_end_date=end_date
+        )
+    
+    @classmethod
+    def create_with_deadline(cls, title: str, days_until_due: int,
+                            description: str = "",
+                            categories: Optional[List[str]] = None) -> "Todo":
+        """Factory Method: Erstellt Todo mit relativem Fälligkeitsdatum.
+        
+        Verwendung:
+        - Deadline in X Tagen
+        - Flexible Datum-Berechnung
+        
+        Live-Coding-Anpassungen:
+        - Arbeitstage statt Kalendertage
+        - Wochenenden überspringen
+        """
+        from datetime import timedelta
+        due = date.today() + timedelta(days=days_until_due)
+        return cls(
+            title=title,
+            description=description,
+            due_date=due,
+            categories=categories or []
+        )
+
     def update(self, **kwargs) -> None:
         """Update Felder der Aufgabe"""
         for key, value in kwargs.items():
@@ -397,3 +493,255 @@ class JSONStorage:
             color=cat_dict.get("color", "#0078D4"),
             created_at=datetime.fromisoformat(cat_dict["created_at"]),
         )
+
+
+# ===== ADAPTER PATTERN: EXTERNE AUFGABENQUELLEN =====
+
+@dataclass
+class ExternalTask:
+    """Externe Aufgabe von fiktiver API (z.B. Trello, Jira, Asana).
+    
+    Unterschiede zu Todo:
+    - task_id statt id
+    - name statt title
+    - details statt description
+    - priority statt status
+    - deadline statt due_date
+    - tags statt categories
+    - created/modified statt created_at/updated_at
+    """
+    task_id: str
+    name: str
+    details: str = ""
+    priority: str = "normal"  # "low", "normal", "high", "urgent"
+    deadline: Optional[str] = None  # ISO-Format String
+    tags: List[str] = field(default_factory=list)
+    is_completed: bool = False
+    created: str = field(default_factory=lambda: datetime.now().isoformat())
+    modified: str = field(default_factory=lambda: datetime.now().isoformat())
+    repeat_pattern: Optional[str] = None  # "daily", "weekly", "monthly", None
+
+
+class ExternalTaskAPI:
+    """Fiktive externe API für Aufgaben.
+    
+    Simuliert externe Datenquelle mit anderem Format.
+    In der Realität: REST API, GraphQL, Datenbank, etc.
+    
+    Live-Coding-Anpassungen:
+    - HTTP-Requests zu echter API
+    - Authentifizierung hinzufügen
+    - Error Handling für Netzwerkfehler
+    """
+    
+    def __init__(self):
+        """Initialisiere mit Mock-Daten."""
+        self._tasks: List[ExternalTask] = []
+    
+    def fetch_tasks(self) -> List[ExternalTask]:
+        """Hole Aufgaben von externer Quelle.
+        
+        Live-Coding:
+        return requests.get("https://api.example.com/tasks").json()
+        """
+        return self._tasks
+    
+    def add_mock_task(self, task: ExternalTask) -> None:
+        """Füge Mock-Task hinzu (nur für Demo/Tests)."""
+        self._tasks.append(task)
+    
+    def clear_tasks(self) -> None:
+        """Lösche alle Tasks (nur für Tests)."""
+        self._tasks.clear()
+
+
+class ExternalTaskAdapter:
+    """Adapter: Konvertiert ExternalTask -> Todo.
+    
+    Design Pattern: Adapter (Wrapper Pattern)
+    - Übersetzt externes Format in internes Format
+    - Bestehender Code bleibt unverändert
+    - Ermöglicht Integration verschiedener Quellen
+    
+    Live-Coding-Anpassungen:
+    - Bidirektionaler Adapter (Todo -> ExternalTask)
+    - Batch-Konvertierung optimieren
+    - Caching für häufige Konvertierungen
+    """
+    
+    @staticmethod
+    def adapt(external_task: ExternalTask) -> Todo:
+        """Konvertiert ExternalTask in Todo.
+        
+        Mapping:
+        - task_id -> id
+        - name -> title
+        - details -> description
+        - priority -> status (high/urgent -> Urgent-Kategorie)
+        - deadline -> due_date
+        - tags -> categories
+        - repeat_pattern -> recurrence
+        
+        Args:
+            external_task: Externe Aufgabe
+        
+        Returns:
+            Todo-Objekt im internen Format
+        
+        Live-Coding:
+        - Fehlerbehandlung bei ungültigen Daten
+        - Logging für Konvertierungen
+        - Validierung vor Konvertierung
+        """
+        # Status-Mapping
+        status = TodoStatus.COMPLETED if external_task.is_completed else TodoStatus.OPEN
+        
+        # Datum-Konvertierung
+        due_date = None
+        if external_task.deadline:
+            try:
+                due_date = date.fromisoformat(external_task.deadline)
+            except (ValueError, TypeError):
+                due_date = None
+        
+        # Recurrence-Mapping
+        recurrence = RecurrenceType.NONE
+        if external_task.repeat_pattern:
+            recurrence_map = {
+                "daily": RecurrenceType.DAILY,
+                "weekly": RecurrenceType.WEEKLY,
+                "monthly": RecurrenceType.MONTHLY,
+            }
+            recurrence = recurrence_map.get(
+                external_task.repeat_pattern.lower(), 
+                RecurrenceType.NONE
+            )
+        
+        # Priority zu Kategorie konvertieren
+        categories = external_task.tags.copy() if external_task.tags else []
+        if external_task.priority in ["high", "urgent"]:
+            if "Urgent" not in categories:
+                categories.append("Urgent")
+        
+        # Zeitstempel-Konvertierung
+        created_at = datetime.fromisoformat(external_task.created)
+        updated_at = datetime.fromisoformat(external_task.modified)
+        completed_at = updated_at if external_task.is_completed else None
+        
+        # Todo erstellen
+        return Todo(
+            id=external_task.task_id,
+            title=external_task.name,
+            description=external_task.details,
+            status=status,
+            due_date=due_date,
+            categories=categories,
+            recurrence=recurrence,
+            recurrence_interval=1,
+            recurrence_end_date=None,
+            created_at=created_at,
+            updated_at=updated_at,
+            completed_at=completed_at
+        )
+    
+    @staticmethod
+    def adapt_many(external_tasks: List[ExternalTask]) -> List[Todo]:
+        """Konvertiert mehrere externe Aufgaben.
+        
+        Live-Coding:
+        - Parallel-Verarbeitung für große Listen
+        - Progress-Callback für UI
+        - Fehlerhafte Tasks überspringen statt Abbruch
+        """
+        return [ExternalTaskAdapter.adapt(task) for task in external_tasks]
+    
+    @staticmethod
+    def reverse_adapt(todo: Todo) -> ExternalTask:
+        """Konvertiert Todo zurück in ExternalTask (optional).
+        
+        Für bidirektionale Synchronisation.
+        
+        Live-Coding:
+        - Sync-Konflikte erkennen
+        - Merge-Strategien implementieren
+        """
+        # Status-Mapping
+        is_completed = todo.status == TodoStatus.COMPLETED
+        
+        # Priority aus Kategorien ableiten
+        priority = "urgent" if "Urgent" in todo.categories else "normal"
+        
+        # Recurrence-Mapping
+        repeat_pattern = None
+        if todo.recurrence != RecurrenceType.NONE:
+            pattern_map = {
+                RecurrenceType.DAILY: "daily",
+                RecurrenceType.WEEKLY: "weekly",
+                RecurrenceType.MONTHLY: "monthly",
+            }
+            repeat_pattern = pattern_map.get(todo.recurrence)
+        
+        # Tags ohne "Urgent"
+        tags = [cat for cat in todo.categories if cat != "Urgent"]
+        
+        return ExternalTask(
+            task_id=todo.id,
+            name=todo.title,
+            details=todo.description,
+            priority=priority,
+            deadline=todo.due_date.isoformat() if todo.due_date else None,
+            tags=tags,
+            is_completed=is_completed,
+            created=todo.created_at.isoformat(),
+            modified=todo.updated_at.isoformat(),
+            repeat_pattern=repeat_pattern
+        )
+
+
+class ExternalTaskImporter:
+    """Import-Service für externe Aufgaben (Facade).
+    
+    Vereinfacht Integration in Controller.
+    
+    Live-Coding-Erweiterungen:
+    - Duplikat-Erkennung
+    - Merge-Strategien (bei ID-Konflikten)
+    - Selective Import (Filter-Optionen)
+    """
+    
+    def __init__(self, api: ExternalTaskAPI, adapter: ExternalTaskAdapter):
+        """Initialisiere Importer.
+        
+        Args:
+            api: Externe API-Quelle
+            adapter: Adapter für Konvertierung
+        """
+        self.api = api
+        self.adapter = adapter
+    
+    def import_tasks(self) -> List[Todo]:
+        """Importiert alle Tasks von externer Quelle.
+        
+        Returns:
+            Liste konvertierter Todos
+        
+        Live-Coding:
+        - Progress-Tracking
+        - Error-Handling pro Task
+        - Import-Statistiken zurückgeben
+        """
+        external_tasks = self.api.fetch_tasks()
+        return self.adapter.adapt_many(external_tasks)
+    
+    def import_task_by_id(self, task_id: str) -> Optional[Todo]:
+        """Importiert einzelnen Task nach ID.
+        
+        Live-Coding:
+        - Direkter API-Call statt fetch_all
+        - Caching für bereits importierte Tasks
+        """
+        external_tasks = self.api.fetch_tasks()
+        for task in external_tasks:
+            if task.task_id == task_id:
+                return self.adapter.adapt(task)
+        return None
